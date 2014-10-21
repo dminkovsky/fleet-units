@@ -1,0 +1,21 @@
+[Unit]
+Description=SkyDNS
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill skydns
+ExecStartPre=-/usr/bin/docker rm skydns
+ExecStartPre=-/usr/bin/docker pull dminkovsky/skydns
+ExecStart=/usr/bin/docker run \
+    --name skydns \
+    -p 53:53/udp \
+    -e ETCD_MACHINES=172.17.42.1:4001 \
+    -e SKYDNS_ADDR=0.0.0.0:53 \
+    dminkovsky/skydns
+ExecStop=/usr/bin/docker stop skydns
+
+[X-Fleet]
+Global=true

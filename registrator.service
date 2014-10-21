@@ -1,0 +1,19 @@
+[Unit]
+Description=Registrator
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill registrator
+ExecStartPre=-/usr/bin/docker rm registrator
+ExecStartPre=-/usr/bin/docker pull dminkovsky/registrator
+ExecStart=/usr/bin/docker run \
+    --name registrator \
+    -v /var/run/docker.sock:/tmp/docker.sock \
+    dminkovsky/registrator -ip ${COREOS_PRIVATE_IPV4} skydns2://172.17.42.1:4001/skydns.local
+ExecStop=/usr/bin/docker stop registrator
+
+[X-Fleet]
+Global=true

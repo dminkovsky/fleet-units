@@ -1,0 +1,30 @@
+[Unit]
+Description=RethinkDB
+After=docker.service
+Requires=docker.service
+# Requires=skydns.service
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill rethinkdb
+ExecStartPre=-/usr/bin/docker rm rethinkdb
+ExecStartPre=-/usr/bin/docker pull dockerfile/rethinkdb
+ExecStart=/bin/sh -c '/usr/bin/docker run                                 \
+    --name rethinkdb                                                      \
+    --dns 172.17.42.1                                                     \
+    -p 8080:8080                                                          \
+    -p 28015:28015                                                        \
+    -p 29015:29015                                                        \
+    -v /home/core/docker-volumes/rethinkdb:/data                          \
+    dockerfile/rethinkdb rethinkdb                                        \
+    --directory /data                                                     \
+    --bind all                                                            \
+    --canonical-address ${COREOS_PRIVATE_IPV4}                            \
+    $(/usr/bin/etcdctl ls /announce/services |                            \
+      xargs -I {} /usr/bin/etcdctl get {} |                               \
+      xargs -I {} echo -n "--join {}:29015 ")'
+ExecStop=/usr/bin/docker stop rethinkdb
+
+[X-Fleet]
+Global=true
