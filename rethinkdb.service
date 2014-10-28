@@ -2,7 +2,6 @@
 Description=RethinkDB
 After=docker.service
 Requires=docker.service
-# Requires=skydns.service
 
 [Service]
 TimeoutStartSec=0
@@ -12,7 +11,6 @@ ExecStartPre=-/usr/bin/docker rm rethinkdb
 ExecStartPre=-/usr/bin/docker pull dockerfile/rethinkdb
 ExecStart=/bin/sh -c '/usr/bin/docker run                                 \
     --name rethinkdb                                                      \
-    --dns 172.17.42.1                                                     \
     -p 8080:8080                                                          \
     -p 28015:28015                                                        \
     -p 29015:29015                                                        \
@@ -21,7 +19,7 @@ ExecStart=/bin/sh -c '/usr/bin/docker run                                 \
     --directory /data                                                     \
     --bind all                                                            \
     --canonical-address ${COREOS_PRIVATE_IPV4}                            \
-    $(/usr/bin/etcdctl ls /announce/services |                            \
+    $(/usr/bin/etcdctl ls /announce/services/rethinkdb |                  \
       xargs -I {} /usr/bin/etcdctl get {} |                               \
       xargs -I {} echo -n "--join {}:29015 ")'
 ExecStop=/usr/bin/docker stop rethinkdb
