@@ -1,0 +1,20 @@
+[Unit]
+Description=NSQ nsqlookupd %i
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill nsqlookupd
+ExecStartPre=-/usr/bin/docker rm nsqlookupd
+ExecStartPre=-/usr/bin/docker pull dockerfile/nsq
+ExecStart=/usr/bin/docker run                \
+    --name nsqlookupd                        \
+    -p 4160:4160                             \
+    -p 4161:4161                             \
+    dockerfile/nsq nsqlookupd
+ExecStop=/usr/bin/docker stop nsqlookupd
+
+[X-Fleet]
+MachineOf=nsqlookupd-discovery@%i.service

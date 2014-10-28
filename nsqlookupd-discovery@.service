@@ -1,0 +1,14 @@
+[Unit]
+Description=NSQ nsqlookupd %i discovery
+
+[Service]
+EnvironmentFile=/etc/environment
+ExecStart=/bin/sh -c '                                                                   \
+    while true;                                                                          \
+        do etcdctl set /announce/services/nsqlookupd/%m ${COREOS_PRIVATE_IPV4} --ttl 60; \
+        sleep 45;                                                                        \
+    done'
+ExecStop=/usr/bin/etcdctl rm /announce/services/nsqlookupd/%m
+
+[X-Fleet]
+Conflicts=nsqlookupd-discovery@*.service

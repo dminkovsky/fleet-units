@@ -1,0 +1,22 @@
+[Unit]
+Description=NSQ nsqd %i
+After=docker.service
+Requires=docker.service
+#Requires=skydns.service
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill nsqd
+ExecStartPre=-/usr/bin/docker rm nsqd
+ExecStartPre=-/usr/bin/docker pull dockerfile/nsq
+ExecStart=/bin/sh -c '/usr/bin/docker run                                  \
+    --name nsqd                                                            \
+    -p 4150:4150                                                           \
+    -p 4151:4151                                                           \
+    dockerfile/nsq nsqd                                                    \
+    -broadcast-address=${COREOS_PRIVATE_IPV4}                              \
+    $(/usr/bin/etcdctl ls /announce/services/nsqlookupd |                  \
+      xargs -I {} /usr/bin/etcdctl get {} |                                \
+      xargs -I {} echo -n "-lookupd-tcp-address={}:4160 ")'
+ExecStop=/usr/bin/docker stop nsqd

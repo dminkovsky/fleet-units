@@ -1,0 +1,19 @@
+[Unit]
+Description=NSQ nsqadmin
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill nsqadmin
+ExecStartPre=-/usr/bin/docker rm nsqadmin
+ExecStartPre=-/usr/bin/docker pull dockerfile/nsq
+ExecStart=/usr/bin/docker run                                              \
+    --name nqsadmin                                                        \
+    -p 4171:4171                                                           \
+    dockerfile/nsq nsqadmin                                                \
+    $(/usr/bin/etcdctl ls /announce/services/nsqlookupd |                  \
+      xargs -I {} /usr/bin/etcdctl get {} |                                \
+      xargs -I {} echo -n "-lookupd-http-address={}:4161 ")'
+ExecStop=/usr/bin/docker stop nsqadmin
